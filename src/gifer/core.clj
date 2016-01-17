@@ -77,6 +77,6 @@
                  (t/with-identity (t/key "triggers.1"))
                  (t/start-now)
                  (t/with-schedule (cs/schedule
-                                   (cron-schedule "10 * * * * ?"))))]
+                                   (cron-schedule "*/10 * * * * ?"))))]
     (scheduler/schedule s job trigger)
     (println "Starting scheduler!")))

@@ -32,13 +32,12 @@
   (let [tmp-file (io/file "/tmp/giphy.gif")
         in       (io/input-stream gif-url)
         out      (io/output-stream tmp-file)
-        _        (io/copy in out)
-        resp     @(http/post (str base-url "/sendDocument")
-                             {:query-params {:chat_id chat-id}
-                              :multipart [{:name "document"
-                                           :content tmp-file
-                                           :filename "giphy.gif"}]})]
-    (:body resp)))
+        _        (io/copy in out)]
+    (http/post (str base-url "/sendDocument")
+               {:query-params {:chat_id chat-id}
+                :multipart [{:name "document"
+                             :content tmp-file
+                             :filename "giphy.gif"}]})))
 
 (defn get-gifs [subject]
   (let [resp @(http/get giphy-url

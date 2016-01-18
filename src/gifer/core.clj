@@ -2,11 +2,9 @@
   (:require [org.httpkit.client :as http]
             [clojure.java.io :as io]
             [cheshire.core :as json]
-            [clojurewerkz.quartzite.scheduler :as scheduler]
-            [clojurewerkz.quartzite.jobs :as jobs]
-            [clojurewerkz.quartzite.triggers :as t]
-            [clojurewerkz.quartzite.schedule.cron :as cs :refer [cron-schedule]]
-            [environ.core :as env :refer [env]]))
+            [environ.core :as env :refer [env]]
+            [cronj.core :as cronj])
+  (:gen-class))
 
 (def base-url
   (str "https://api.telegram.org/bot" (env :bot-token)))
@@ -62,21 +60,18 @@
       (println "Sending GIF: " gif-url " to chat: " chat-id)
       (send-gif chat-id gif-url))))
 
-(jobs/defjob SendGifs
-  [ctx]
-  (println "Sending gifs...")
-  (send-gifs)
-  (println "Gifs sent!"))
+(defn gif-handler [t opts]
+  (println t)
+  (send-gifs))
+
+(def gif-task
+  {:id "gif_task"
+   :handler gif-handler
+   :schedule "* /10 * * * * *"
+   :opts {}})
 
 (defn -main [& args]
-  (let [s       (-> (scheduler/initialize) (scheduler/start))
-        job     (jobs/build
-                 (jobs/of-type SendGifs)
-                 (jobs/with-identity (jobs/key "jobs.gifs.1")))
-        trigger (t/build
-                 (t/with-identity (t/key "triggers.1"))
-                 (t/start-now)
-                 (t/with-schedule (cs/schedule
-                                   (cron-schedule "*/10 * * * * ?"))))]
-    (scheduler/schedule s job trigger)
-    (println "Starting scheduler!")))
+  (let [cj (cronj/cronj :entries [gif-task])]
+    (println "Starting scheduler!")
+    (cronj/start! cj)
+    (println "Scheduler started!")))
